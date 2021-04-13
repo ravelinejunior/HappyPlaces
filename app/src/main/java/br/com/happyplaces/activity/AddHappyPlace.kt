@@ -181,7 +181,9 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
             if (addHappyPlace > 0) {
                 Toast.makeText(applicationContext, "Inserted with success!", Toast.LENGTH_SHORT)
                     .show()
+                setResult(Activity.RESULT_OK)
                 finish()
+                // startActivity(Intent(this, MainActivity::class.java))
             } else {
                 Toast.makeText(applicationContext, "Something went wrong!", Toast.LENGTH_SHORT)
                     .show()

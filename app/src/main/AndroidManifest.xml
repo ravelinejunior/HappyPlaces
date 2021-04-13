@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.HappyPlaces">
+        <activity android:name=".activity.HappyPlaceDetail"></activity>
         <activity
             android:name=".activity.AddHappyPlace"
             android:label="Add Happy Place"
@@ -21,9 +22,8 @@
             android:theme="@style/CustomNoActionBarTheme" />
         <activity
             android:name=".activity.MainActivity"
-            android:theme="@style/CustomNoActionBarTheme"
             android:screenOrientation="portrait"
-            >
+            android:theme="@style/CustomNoActionBarTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

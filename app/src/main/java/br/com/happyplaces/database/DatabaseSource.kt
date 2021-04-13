@@ -2,7 +2,9 @@ package br.com.happyplaces.database
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import br.com.happyplaces.model.HappyPlaceModel
 
@@ -50,6 +52,44 @@ class DatabaseSource(context: Context) : SQLiteOpenHelper(
 
     }
 
+    fun getHappyPlacesList(): ArrayList<HappyPlaceModel> {
+        val happyPlacesList = ArrayList<HappyPlaceModel>()
+        val selectQuery = "SELECT * FROM $HAPPYPLACE_TABLE"
+        val db = this.readableDatabase
+
+        try {
+            val cursor: Cursor = db.rawQuery(selectQuery, null)
+
+            if (cursor.moveToFirst()) {
+                do {
+                    val placeModel = HappyPlaceModel(
+                        cursor.getInt(cursor.getColumnIndex(KEY_ID)),
+                        cursor.getString(cursor.getColumnIndex(KEY_TITLE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_IMAGE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndex(KEY_DATE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_LOCATION)),
+                        cursor.getDouble(cursor.getColumnIndex(KEY_LATITUDE)),
+                        cursor.getDouble(cursor.getColumnIndex(KEY_LONGITUDE))
+                    )
+
+                    happyPlacesList.add(placeModel)
+
+                } while (cursor.moveToNext())
+            }
+            cursor.close()
+        } catch (e: SQLiteException) {
+            db.execSQL(selectQuery)
+            e.printStackTrace()
+
+            return ArrayList()
+        }
+
+        db.close()
+
+        return happyPlacesList
+    }
+
     companion object {
         private const val DATABASE_VERSION = 1
         private const val DATABASE_NAME = "HappyPlace_Db"
@@ -65,4 +105,5 @@ class DatabaseSource(context: Context) : SQLiteOpenHelper(
         private const val KEY_LATITUDE = "latitude"
         private const val KEY_LONGITUDE = "longitude"
     }
+
 }
