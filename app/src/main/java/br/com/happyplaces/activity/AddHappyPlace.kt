@@ -1,4 +1,4 @@
-package br.com.happyplaces
+package br.com.happyplaces.activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -19,6 +19,9 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import br.com.happyplaces.R
+import br.com.happyplaces.database.DatabaseSource
+import br.com.happyplaces.model.HappyPlaceModel
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -36,6 +39,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
 
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+    private var saveImageToInternalStorage: Uri? = null
+    private var mLatitude: Double? = 0.0
+    private var mLongitude: Double? = 0.0
+
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +109,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
 
             }
 
+            R.id.btn_save -> {
+                addHappyPlace()
+            }
+
         }
     }
 
@@ -110,6 +121,75 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
         et_date.setText(sdf.format(cal.time).toString())
     }
+
+    private fun checkIfFieldsAreEmpty(): Boolean {
+        var check = false
+        when {
+            et_title.text.isNullOrEmpty() -> {
+                Toast.makeText(applicationContext, "Title can´t be empty!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            et_description.text.isNullOrEmpty() -> {
+                Toast.makeText(
+                    applicationContext,
+                    "Description can´t be empty!",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            et_date.text.isNullOrEmpty() -> {
+                Toast.makeText(applicationContext, "Date can´t be empty!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            et_location.text.isNullOrEmpty() -> {
+                Toast.makeText(applicationContext, "Location can´t be empty!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+            saveImageToInternalStorage == null -> {
+                Toast.makeText(applicationContext, "Image can´t be empty!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+            else -> {
+                check = true
+            }
+        }
+        return check
+    }
+
+    private fun addHappyPlace() {
+        val db = DatabaseSource(applicationContext)
+
+        val title = et_title.text.toString()
+        val date = et_date.text.toString()
+        val location = et_location.text.toString()
+        val description = et_description.text.toString()
+
+        if (checkIfFieldsAreEmpty()) {
+            val happyPlace = HappyPlaceModel(
+                0,
+                title,
+                saveImageToInternalStorage.toString(),
+                description,
+                date,
+                location,
+                mLatitude!!,
+                mLongitude!!
+            )
+
+            val addHappyPlace = db.addHappyPlace(happyPlace)
+
+            if (addHappyPlace > 0) {
+                Toast.makeText(applicationContext, "Inserted with success!", Toast.LENGTH_SHORT)
+                    .show()
+                finish()
+            } else {
+                Toast.makeText(applicationContext, "Something went wrong!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+
+        }
+    }
+
 
     private fun choosePhotoFromGallery() {
         Dexter.withContext(applicationContext).withPermissions(
@@ -120,7 +200,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                 if (report!!.areAllPermissionsGranted()) {
                     val galleryIntent =
                         Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                    startActivityForResult(galleryIntent, GALLERY_KEY)
+                    startActivityForResult(
+                        galleryIntent,
+                        GALLERY_KEY
+                    )
                 } else {
                     Toast.makeText(
                         this@AddHappyPlace,
@@ -151,7 +234,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                 if (report!!.areAllPermissionsGranted()) {
                     val galleryIntent =
                         Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    startActivityForResult(galleryIntent, CAMERA_KEY)
+                    startActivityForResult(
+                        galleryIntent,
+                        CAMERA_KEY
+                    )
                 } else {
                     Toast.makeText(
                         this@AddHappyPlace,
@@ -224,8 +310,8 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                         val selectedImageBitmap =
                             MediaStore.Images.Media.getBitmap(this.contentResolver, contentUri)
 
-                        val savedImage = saveImageToInternalStorage(selectedImageBitmap)
-                        Log.i("SavedImage", "onActivityResult: $savedImage")
+                        saveImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
+                        Log.i("SavedImage", "onActivityResult: $saveImageToInternalStorage")
                         iv_place_image.setImageBitmap(selectedImageBitmap)
 
                     } catch (e: IOException) {
@@ -239,8 +325,8 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                     val thumbnails: Bitmap = data!!.extras!!.get("data") as Bitmap
                     try {
 
-                        val savedImage = saveImageToInternalStorage(thumbnails)
-                        Log.i("SavedImage", "onActivityResult: $savedImage")
+                        saveImageToInternalStorage = saveImageToInternalStorage(thumbnails)
+                        Log.i("SavedImage", "onActivityResult: $saveImageToInternalStorage")
                         iv_place_image.setImageBitmap(thumbnails)
 
                     } catch (e: IOException) {

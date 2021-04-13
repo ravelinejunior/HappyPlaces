@@ -1,8 +1,9 @@
-package br.com.happyplaces
+package br.com.happyplaces.activity
 
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import br.com.happyplaces.R
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {

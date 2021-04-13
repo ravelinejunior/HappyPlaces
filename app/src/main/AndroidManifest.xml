@@ -14,14 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HappyPlaces">
         <activity
-            android:name=".AddHappyPlace"
+            android:name=".activity.AddHappyPlace"
             android:label="Add Happy Place"
-            android:parentActivityName=".MainActivity"
+            android:parentActivityName=".activity.MainActivity"
             android:screenOrientation="portrait"
             android:theme="@style/CustomNoActionBarTheme" />
         <activity
-            android:name=".MainActivity"
-            android:theme="@style/CustomNoActionBarTheme">
+            android:name=".activity.MainActivity"
+            android:theme="@style/CustomNoActionBarTheme"
+            android:screenOrientation="portrait"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
