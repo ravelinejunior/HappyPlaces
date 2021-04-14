@@ -20,6 +20,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import br.com.happyplaces.R
+import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
 import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
 import com.karumi.dexter.Dexter
@@ -43,6 +44,8 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
     private var mLatitude: Double? = 0.0
     private var mLongitude: Double? = 0.0
 
+    private var mHappyPlaceDetail: HappyPlaceModel? = null
+
 
     @SuppressLint("RestrictedApi")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,8 +55,13 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setDefaultDisplayHomeAsUpEnabled(true)
         setSupportActionBar(toolbar_add_place)
+        toolbar_add_place.textAlignment = View.TEXT_ALIGNMENT_CENTER
         toolbar_add_place.setOnClickListener {
             onBackPressed()
+        }
+
+        if (intent.hasExtra(HAPPYPLACE_KEY)) {
+            mHappyPlaceDetail = intent.getSerializableExtra(HAPPYPLACE_KEY) as HappyPlaceModel
         }
 
         dateSetListener = DatePickerDialog.OnDateSetListener { view, year, month, day ->
@@ -62,6 +70,12 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
             cal.set(Calendar.MONTH, month)
             cal.set(Calendar.DAY_OF_MONTH, day)
             updateDateView()
+
+        }
+
+        if (mHappyPlaceDetail != null) {
+            supportActionBar?.title = mHappyPlaceDetail?.title
+            fillDataIfEdit(mHappyPlaceDetail)
 
         }
 
@@ -110,9 +124,34 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
             }
 
             R.id.btn_save -> {
-                addHappyPlace()
+
+                if (mHappyPlaceDetail != null) {
+                    updateHappyPlace()
+                } else {
+                    addHappyPlace()
+                }
+
             }
 
+        }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun fillDataIfEdit(happyPlace: HappyPlaceModel?) {
+        if (happyPlace != null) {
+
+            et_title.setText(happyPlace.title)
+            et_description.setText(happyPlace.description)
+            et_date.setText(happyPlace.date)
+            et_location.setText(happyPlace.location)
+
+            saveImageToInternalStorage = Uri.parse(happyPlace.image)
+            iv_place_image.setImageURI(saveImageToInternalStorage)
+
+            mLatitude = happyPlace.latitude
+            mLongitude = happyPlace.longitude
+
+            btn_save.text = "UPDATE"
         }
     }
 
@@ -190,6 +229,39 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
             }
 
         }
+    }
+
+    private fun updateHappyPlace() {
+        val db = DatabaseSource(this)
+
+        val title = et_title.text.toString()
+        val date = et_date.text.toString()
+        val location = et_location.text.toString()
+        val description = et_description.text.toString()
+
+        if (checkIfFieldsAreEmpty()) {
+
+            val happyPlace = HappyPlaceModel(
+                mHappyPlaceDetail!!.id,
+                title,
+                saveImageToInternalStorage.toString(),
+                description,
+                date,
+                location,
+                mLatitude!!,
+                mLongitude!!
+            )
+
+            val updateHappyPlace = db.updateHappyPlace(happyPlace)
+            if (updateHappyPlace > 0) {
+                setResult(Activity.RESULT_OK)
+                finish()
+            } else {
+                Toast.makeText(applicationContext, "Something went wrong!", Toast.LENGTH_SHORT)
+                    .show()
+            }
+        }
+
     }
 
 

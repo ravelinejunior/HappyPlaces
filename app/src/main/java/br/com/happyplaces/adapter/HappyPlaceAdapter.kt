@@ -1,6 +1,8 @@
 package br.com.happyplaces.adapter
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +10,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import br.com.happyplaces.R
+import br.com.happyplaces.activity.AddHappyPlace
+import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
 import br.com.happyplaces.model.HappyPlaceModel
 import com.google.android.material.card.MaterialCardView
 import de.hdodenhof.circleimageview.CircleImageView
@@ -46,6 +50,15 @@ open class HappyPlaceAdapter(
         }
 
     }
+
+    open fun notifyEditItem(activity: Activity, position: Int, requestCode: Int) {
+        val intent = Intent(context, AddHappyPlace::class.java)
+        intent.putExtra(HAPPYPLACE_KEY, items[position])
+        activity.startActivityForResult(intent,requestCode)
+        notifyItemChanged(position)
+        notifyDataSetChanged()
+    }
+
 
     fun setOnClickListener(onClickListener: OnClickListener) {
         this.onClickListener = onClickListener
