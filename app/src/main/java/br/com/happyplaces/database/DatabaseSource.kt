@@ -54,7 +54,7 @@ class DatabaseSource(context: Context) : SQLiteOpenHelper(
 
     fun updateHappyPlace(happyPlace: HappyPlaceModel): Int {
         val db = this.writableDatabase
-        val updateSQL = "$KEY_ID = ${happyPlace.id}  "
+        val updateSQL = "$KEY_ID = ${happyPlace.id}"
         try {
             val contentValues = ContentValues()
             contentValues.put(KEY_TITLE, happyPlace.title)
@@ -68,6 +68,22 @@ class DatabaseSource(context: Context) : SQLiteOpenHelper(
             val result = db.update(HAPPYPLACE_TABLE, contentValues, updateSQL, null)
             db.close()
             return result
+        } catch (e: SQLiteException) {
+            e.printStackTrace()
+            db.close()
+            return -1
+        }
+    }
+
+    fun deleteHappyPlace(happyPlace: HappyPlaceModel): Int {
+
+        val db = this.writableDatabase
+        val deleteSQL = "$KEY_ID = ${happyPlace.id}"
+
+        try {
+            val deletedResult = db.delete(HAPPYPLACE_TABLE, deleteSQL, null)
+            db.close()
+            return deletedResult
         } catch (e: SQLiteException) {
             e.printStackTrace()
             db.close()

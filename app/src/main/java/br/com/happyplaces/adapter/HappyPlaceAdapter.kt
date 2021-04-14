@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import br.com.happyplaces.R
 import br.com.happyplaces.activity.AddHappyPlace
 import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
+import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
 import com.google.android.material.card.MaterialCardView
 import de.hdodenhof.circleimageview.CircleImageView
@@ -54,9 +55,26 @@ open class HappyPlaceAdapter(
     open fun notifyEditItem(activity: Activity, position: Int, requestCode: Int) {
         val intent = Intent(context, AddHappyPlace::class.java)
         intent.putExtra(HAPPYPLACE_KEY, items[position])
-        activity.startActivityForResult(intent,requestCode)
+        activity.startActivityForResult(intent, requestCode)
         notifyItemChanged(position)
         notifyDataSetChanged()
+    }
+
+    open fun notifyDeleteItem(position: Int) {
+        val db = DatabaseSource(context)
+        val isDeleted = db.deleteHappyPlace(items[position])
+
+        try {
+            if (isDeleted > 0) {
+                items.removeAt(position)
+                notifyItemChanged(position)
+                notifyDataSetChanged()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+
     }
 
 

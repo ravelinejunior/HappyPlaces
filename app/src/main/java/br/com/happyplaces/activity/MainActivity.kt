@@ -12,6 +12,7 @@ import br.com.happyplaces.R
 import br.com.happyplaces.adapter.HappyPlaceAdapter
 import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
+import br.com.happyplaces.utils.SwipeToDeleteCallback
 import br.com.happyplaces.utils.SwipeToEditCallback
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -60,16 +61,28 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        val editSwipeHandler = object : SwipeToEditCallback(applicationContext){
+        val editSwipeHandler = object : SwipeToEditCallback(applicationContext) {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                adapter.notifyEditItem(this@MainActivity,viewHolder.adapterPosition,
-                    ADD_PLACE_REQUEST_CODE)
+                adapter.notifyEditItem(
+                    this@MainActivity, viewHolder.adapterPosition,
+                    ADD_PLACE_REQUEST_CODE
+                )
             }
 
         }
 
         val editItemTouchHelper = ItemTouchHelper(editSwipeHandler)
         editItemTouchHelper.attachToRecyclerView(recyclerView_Main)
+
+        val deleteSwipeHandler = object : SwipeToDeleteCallback(applicationContext) {
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                adapter.notifyDeleteItem(viewHolder.adapterPosition)
+                getHappyPlacesFromLocal()
+            }
+        }
+
+        val deleteItemTouchHelper = ItemTouchHelper(deleteSwipeHandler)
+        deleteItemTouchHelper.attachToRecyclerView(recyclerView_Main)
 
 
     }
