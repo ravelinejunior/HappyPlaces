@@ -46,6 +46,17 @@ class MainActivity : AppCompatActivity() {
         recyclerView_Main.setHasFixedSize(true)
         recyclerView_Main.adapter = adapter
 
+        //best practice to set click listener
+        adapter.setOnClickListener(object : HappyPlaceAdapter.OnClickListener {
+            override fun onClick(position: Int, happyPlace: HappyPlaceModel) {
+                val intent = Intent(this@MainActivity, HappyPlaceDetail::class.java)
+                intent.putExtra(POSITION_KEY, position)
+                intent.putExtra(HAPPYPLACE_KEY, happyPlace)
+                startActivity(intent)
+            }
+
+        })
+
 
     }
 
@@ -56,14 +67,17 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == ADD_PLACE_REQUEST_CODE){
-            if(resultCode == Activity.RESULT_OK){
+        if (requestCode == ADD_PLACE_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
                 getHappyPlacesFromLocal()
             }
         }
     }
 
-    companion object{
+    companion object {
         const val ADD_PLACE_REQUEST_CODE = 100
+        const val POSITION_KEY = "Position"
+        const val HAPPYPLACE_KEY = "HappyPlace"
+
     }
 }

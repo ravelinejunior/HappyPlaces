@@ -18,6 +18,7 @@ open class HappyPlaceAdapter(
     private var items: ArrayList<HappyPlaceModel>
 ) : RecyclerView.Adapter<HappyPlaceAdapter.MyViewHolder>() {
 
+    private var onClickListener: OnClickListener? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
         return MyViewHolder(
@@ -38,6 +39,20 @@ open class HappyPlaceAdapter(
         holder.tv_description.text = happyPlace.description
         holder.tv_location.text = happyPlace.location
 
+        holder.itemView.setOnClickListener {
+            if (onClickListener != null) {
+                onClickListener?.onClick(position, happyPlace)
+            }
+        }
+
+    }
+
+    fun setOnClickListener(onClickListener: OnClickListener) {
+        this.onClickListener = onClickListener
+    }
+
+    interface OnClickListener {
+        fun onClick(position: Int, happyPlace: HappyPlaceModel)
     }
 
     class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
