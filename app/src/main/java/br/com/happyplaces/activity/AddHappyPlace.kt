@@ -23,6 +23,12 @@ import br.com.happyplaces.R
 import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
 import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
+import br.com.happyplaces.utils.ApiKey.GOOGLE_MAPS_API_KEY
+import br.com.happyplaces.utils.ApiKey.GOOGLE_MAPS_API_KEY_AMBEV
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -60,6 +66,11 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
             onBackPressed()
         }
 
+        //initializing the map
+        if (!Places.isInitialized()) {
+            Places.initialize(this@AddHappyPlace, GOOGLE_MAPS_API_KEY)
+        }
+
         if (intent.hasExtra(HAPPYPLACE_KEY)) {
             mHappyPlaceDetail = intent.getSerializableExtra(HAPPYPLACE_KEY) as HappyPlaceModel
         }
@@ -84,6 +95,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
         btn_save.setOnClickListener(this)
 
         tv_add_image.setOnClickListener(this)
+
+        et_location.setOnClickListener(this)
+
+        btn_selectCurrentPosition_id.setOnClickListener(this)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -131,6 +146,22 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                     addHappyPlace()
                 }
 
+            }
+
+            R.id.et_location -> {
+                try {
+                    val fields = listOf(
+                        Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS
+                    )
+
+                    val intent =
+                        Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+                            .build(applicationContext)
+
+                    startActivityForResult(intent, PLACE_MAPS_KEY)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
         }
@@ -411,6 +442,15 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
                         ).show()
                     }
                 }
+            } else if (requestCode == PLACE_MAPS_KEY) {
+                if (data != null) {
+                    val place: Place = Autocomplete.getPlaceFromIntent(data)
+
+                    et_location.setText(place.address)
+                    mLatitude = place.latLng?.latitude
+                    mLongitude = place.latLng?.longitude
+                }
+
             }
         }
     }
@@ -418,6 +458,7 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
     companion object {
         const val GALLERY_KEY = 200
         const val CAMERA_KEY = 201
+        const val PLACE_MAPS_KEY = 202
         const val IMAGE_DIRECTORY = "HappyImageStore"
 
     }

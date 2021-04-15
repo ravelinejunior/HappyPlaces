@@ -72,16 +72,16 @@ abstract class SwipeToDeleteCallback(context: Context) :
         )
         background.draw(c)
 
-        // Calculate position of edit icon
-        val editIconTop = itemView.top + (itemHeight - intrinsicHeight) / 2
-        val editIconMargin = (itemHeight - intrinsicHeight)
-        val editIconLeft = itemView.left + editIconMargin - intrinsicWidth
-        val editIconRight = itemView.left + editIconMargin
-        val editIconBottom = editIconTop + intrinsicHeight
+        // Calculate position of delete icon
+        val iconTop = itemView.top + (itemHeight - intrinsicHeight) / 2
+        val iconMargin = (itemHeight - intrinsicHeight) / 2
+        val iconLeft = itemView.right - iconMargin - intrinsicWidth
+        val iconRight = itemView.right - iconMargin
+        val iconBottom = iconTop + intrinsicHeight
 
         // Draw the delete icon
-        deleteIcon!!.setBounds(editIconLeft, editIconTop, editIconRight, editIconBottom)
-        deleteIcon.draw(c)
+        deleteIcon?.setBounds(iconLeft, iconTop, iconRight, iconBottom)
+        deleteIcon?.draw(c)
 
         super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
     }
