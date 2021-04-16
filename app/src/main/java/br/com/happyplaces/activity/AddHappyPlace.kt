@@ -1,5 +1,6 @@
 package br.com.happyplaces.activity
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
@@ -8,10 +9,14 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.location.Location
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -19,12 +24,13 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import br.com.happyplaces.R
 import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
 import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
 import br.com.happyplaces.utils.ApiKey.GOOGLE_MAPS_API_KEY
-import br.com.happyplaces.utils.ApiKey.GOOGLE_MAPS_API_KEY_AMBEV
+import com.google.android.gms.location.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
@@ -42,7 +48,7 @@ import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
+class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClickListener {
 
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
@@ -52,19 +58,21 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
 
     private var mHappyPlaceDetail: HappyPlaceModel? = null
 
+    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
 
-    @SuppressLint("RestrictedApi")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_happy_place)
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDefaultDisplayHomeAsUpEnabled(true)
         setSupportActionBar(toolbar_add_place)
         toolbar_add_place.textAlignment = View.TEXT_ALIGNMENT_CENTER
         toolbar_add_place.setOnClickListener {
             onBackPressed()
         }
+
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 
         //initializing the map
         if (!Places.isInitialized()) {
@@ -96,7 +104,7 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
 
         tv_add_image.setOnClickListener(this)
 
-        et_location.setOnClickListener(this)
+        et_location.setOnLongClickListener(this)
 
         btn_selectCurrentPosition_id.setOnClickListener(this)
     }
@@ -148,22 +156,100 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
 
             }
 
-            R.id.et_location -> {
-                try {
-                    val fields = listOf(
-                        Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS
-                    )
-
-                    val intent =
-                        Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
-                            .build(applicationContext)
-
-                    startActivityForResult(intent, PLACE_MAPS_KEY)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+            R.id.btn_selectCurrentPosition_id -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    myCurrentLocationSelected()
                 }
             }
 
+
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun myCurrentLocationSelected() {
+        if (isLocationEnabled()) {
+            Dexter.withContext(this).withPermissions(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ).withListener(object : MultiplePermissionsListener {
+                override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                    if (report!!.areAllPermissionsGranted()) {
+                        Toast.makeText(
+                            this@AddHappyPlace,
+                            "All permissions granted!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        createLocationRequest()
+
+                    } else {
+                        Toast.makeText(
+                            this@AddHappyPlace,
+                            "All permissions are not granted!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+
+                override fun onPermissionRationaleShouldBeShown(
+                    permission: MutableList<PermissionRequest>?,
+                    token: PermissionToken?
+                ) {
+                    showDialogForPermissions()
+                }
+
+            })
+        } else {
+            Toast.makeText(this, "Your location provider is off", Toast.LENGTH_SHORT).show()
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivity(intent)
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager =
+            getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+            LocationManager.NETWORK_PROVIDER
+        )
+    }
+
+
+    private fun createLocationRequest() {
+        var locationRequest = LocationRequest.create()?.apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            numUpdates = 1
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        mFusedLocationProviderClient.requestLocationUpdates(
+            locationRequest, mLocationCallBack,
+            Looper.myLooper()
+        )
+    }
+
+    private val mLocationCallBack = object : LocationCallback() {
+        override fun onLocationResult(result: LocationResult?) {
+            val mLastLocation: Location = result!!.lastLocation
+
+            mLatitude = mLastLocation.latitude
+            Log.i("TAGLocation", "onLocationResult: $mLatitude")
+
+            mLongitude = mLastLocation.longitude
+            Log.i("TAGLocation", "onLocationResult: $mLongitude")
         }
     }
 
@@ -461,6 +547,29 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener {
         const val PLACE_MAPS_KEY = 202
         const val IMAGE_DIRECTORY = "HappyImageStore"
 
+    }
+
+    override fun onLongClick(v: View?): Boolean {
+        when (v?.id) {
+
+            R.id.et_location -> {
+                try {
+                    val fields = listOf(
+                        Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS
+                    )
+
+                    val intent =
+                        Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+                            .build(applicationContext)
+
+                    startActivityForResult(intent, PLACE_MAPS_KEY)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+
+        return true
     }
 
 }

@@ -10,4 +10,5 @@
     <string name="google_maps_api_key">AIzaSyAruP6WZSGrqTGZXkPEQ3DJ3PbkR9vSR44</string>
     <string name="google_maps_api_key_1">AIzaSyDx4bpBs41aDHjapJ2</string>
     <string name="select_current_location">Select Current Location</string>
+    <string name="see_on_map">See on Map</string>
 </resources>

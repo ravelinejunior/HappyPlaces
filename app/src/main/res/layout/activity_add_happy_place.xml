@@ -121,13 +121,11 @@
                 app:counterOverflowTextColor="@color/colorPrimary"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                android:focusable="false"
                 app:layout_constraintTop_toBottomOf="@+id/til_date">
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/et_location"
                     android:layout_width="match_parent"
-                    android:focusable="false"
                     android:layout_height="wrap_content"
                     android:hint="@string/edit_text_hint_location"
                     android:inputType="text"
