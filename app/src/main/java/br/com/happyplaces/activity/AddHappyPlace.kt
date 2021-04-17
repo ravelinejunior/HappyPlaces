@@ -9,7 +9,6 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.location.Location
 import android.location.LocationManager
@@ -24,12 +23,12 @@ import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import br.com.happyplaces.R
 import br.com.happyplaces.activity.MainActivity.Companion.HAPPYPLACE_KEY
 import br.com.happyplaces.database.DatabaseSource
 import br.com.happyplaces.model.HappyPlaceModel
 import br.com.happyplaces.utils.ApiKey.GOOGLE_MAPS_API_KEY
+import br.com.happyplaces.utils.GetAddressFromLatLng
 import com.google.android.gms.location.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
@@ -47,6 +46,7 @@ import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.random.Random
 
 class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClickListener {
 
@@ -107,6 +107,10 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
         et_location.setOnLongClickListener(this)
 
         btn_selectCurrentPosition_id.setOnClickListener(this)
+
+        btn_randomPlace_id.setOnClickListener(this)
+
+        btn_selectCurrentPosition_id.setOnLongClickListener(this)
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -162,34 +166,38 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
                 }
             }
 
+            R.id.btn_randomPlace_id -> {
+                mLatitude = Random.nextDouble(-30.0, 40.0)
+                mLongitude = Random.nextDouble((-20).toDouble(), 20.toDouble())
+                val addressTask =
+                    GetAddressFromLatLng(applicationContext, mLatitude!!, mLongitude!!)
+                addressTask.setAddressListener(object : GetAddressFromLatLng.AddressListener {
+                    override fun onAddressFound(address: String?) {
+                        et_location.setText(address)
+                    }
+
+                    override fun onError() {
+                        Log.e("TAGonError", "Something went wrong")
+                    }
+                })
+
+                addressTask.getAddress()
+            }
+
 
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
+
     private fun myCurrentLocationSelected() {
         if (isLocationEnabled()) {
             Dexter.withContext(this).withPermissions(
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION
             ).withListener(object : MultiplePermissionsListener {
                 override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
                     if (report!!.areAllPermissionsGranted()) {
-                        Toast.makeText(
-                            this@AddHappyPlace,
-                            "All permissions granted!",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
                         createLocationRequest()
-
-                    } else {
-                        Toast.makeText(
-                            this@AddHappyPlace,
-                            "All permissions are not granted!",
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
                 }
 
@@ -200,7 +208,7 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
                     showDialogForPermissions()
                 }
 
-            })
+            }).onSameThread().check()
         } else {
             Toast.makeText(this, "Your location provider is off", Toast.LENGTH_SHORT).show()
             val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
@@ -217,6 +225,7 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
     }
 
 
+    @SuppressLint("MissingPermission")
     private fun createLocationRequest() {
         var locationRequest = LocationRequest.create()?.apply {
             interval = 10000
@@ -225,16 +234,7 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
             numUpdates = 1
         }
 
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return
-        }
+
         mFusedLocationProviderClient.requestLocationUpdates(
             locationRequest, mLocationCallBack,
             Looper.myLooper()
@@ -250,6 +250,19 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
 
             mLongitude = mLastLocation.longitude
             Log.i("TAGLocation", "onLocationResult: $mLongitude")
+
+            val addressTask = GetAddressFromLatLng(applicationContext, mLatitude!!, mLongitude!!)
+            addressTask.setAddressListener(object : GetAddressFromLatLng.AddressListener {
+                override fun onAddressFound(address: String?) {
+                    et_location.setText(address)
+                }
+
+                override fun onError() {
+                    Log.e("TAGonError", "Something went wrong")
+                }
+            })
+
+            addressTask.getAddress()
         }
     }
 
@@ -566,6 +579,24 @@ class AddHappyPlace : AppCompatActivity(), View.OnClickListener, View.OnLongClic
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+            }
+
+            R.id.btn_selectCurrentPosition_id -> {
+                mLatitude = Random.nextDouble(-30.0, 40.0)
+                mLongitude = Random.nextDouble((-20).toDouble(), 20.toDouble())
+                val addressTask =
+                    GetAddressFromLatLng(applicationContext, mLatitude!!, mLongitude!!)
+                addressTask.setAddressListener(object : GetAddressFromLatLng.AddressListener {
+                    override fun onAddressFound(address: String?) {
+                        et_location.setText(address)
+                    }
+
+                    override fun onError() {
+                        Log.e("TAGonError", "Something went wrong")
+                    }
+                })
+
+                addressTask.getAddress()
             }
         }
 
